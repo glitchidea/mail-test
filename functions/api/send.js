@@ -1,5 +1,3 @@
-import { SMTPClient } from 'emailjs';
-
 export async function onRequestPost(context) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -40,39 +38,48 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Initialize SMTP client
-    const client = new SMTPClient({
-      host: context.env.SMTP_HOST,
-      port: parseInt(context.env.SMTP_PORT),
-      user: context.env.SMTP_USER,
-      password: context.env.SMTP_PASS,
-      ssl: true,
-    });
+    // Prepare email content
+    const emailContent = {
+      personalizations: [{
+        to: [{ email: context.env.SMTP_USER }],
+        subject: `[Contact Form] ${subject}`
+      }],
+      from: { email: context.env.SMTP_USER },
+      reply_to: { email: senderEmail },
+      content: [{
+        type: 'text/html',
+        value: `
+          <h3>Contact Form Message</h3>
+          <p><strong>From:</strong> ${senderEmail}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <hr>
+          <p>${message.replace(/\n/g, '<br>')}</p>
+        `
+      }]
+    };
 
-    // Send email
-    await client.send({
-      from: context.env.SMTP_USER,
-      to: context.env.SMTP_USER,
-      subject: `[Contact Form] ${subject}`,
-      text: `From: ${senderEmail}\n\n${message}`,
-      html: `
-        <h3>Contact Form Message</h3>
-        <p><strong>From:</strong> ${senderEmail}</p>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <hr>
-        <p>${message.replace(/\n/g, '<br>')}</p>
-      `,
-    });
-
-    return new Response(JSON.stringify({
-      success: true,
-      message: 'Email başarıyla gönderildi'
-    }), {
+    // Send email using Cloudflare Email
+    const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders
-      }
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(emailContent),
     });
+
+    if (response.ok) {
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Email başarıyla gönderildi'
+      }), {
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    } else {
+      throw new Error('Email sending failed');
+    }
 
   } catch (error) {
     console.error('Error:', error);
@@ -88,4 +95,15 @@ export async function onRequestPost(context) {
       }
     });
   }
+}
+
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
 }

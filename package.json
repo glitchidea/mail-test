@@ -1,16 +1,8 @@
 {
-  "name": "email-sender-worker",
+  "name": "email-sender",
   "version": "1.0.0",
-  "description": "Email sender Cloudflare Worker",
-  "main": "src/worker.js",
+  "description": "Contact form with Cloudflare Pages Functions",
   "scripts": {
-    "build": "echo 'No build step required'",
-    "dev": "wrangler dev"
-  },
-  "dependencies": {
-    "emailjs": "^4.0.3"
-  },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
+    "build": "echo 'No build step required'"
   }
 }
