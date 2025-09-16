@@ -1,6 +1,14 @@
 export async function onRequestPost(context) {
+  // Dynamic CORS handling
+  const origin = context.request.headers.get('Origin');
+  const allowedOrigins = [
+    'https://glitchidea.com',
+    'https://sentmail.glitchidea.com',
+    'https://75cbf276.mail-test-c8x.pages.dev'
+  ];
+  
   const corsHeaders = {
-    'Access-Control-Allow-Origin': context.env.ALLOWED_ORIGINS || 'https://glitchidea.com',
+    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
@@ -113,9 +121,17 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestOptions(context) {
+  // Dynamic CORS handling for preflight
+  const origin = context.request.headers.get('Origin');
+  const allowedOrigins = [
+    'https://glitchidea.com',
+    'https://sentmail.glitchidea.com', 
+    'https://75cbf276.mail-test-c8x.pages.dev'
+  ];
+  
   return new Response(null, {
     headers: {
-      'Access-Control-Allow-Origin': context.env.ALLOWED_ORIGINS || 'https://glitchidea.com',
+      'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400',

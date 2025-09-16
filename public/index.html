@@ -312,8 +312,12 @@
                 hideStatus();
 
                 try {
-                     // API endpoint'e email gönder
-                     const apiUrl = 'https://sentmail.glitchidea.com/api/send';
+                     // API endpoint'e email gönder - dinamik URL
+                     const apiUrl = window.location.hostname.includes('pages.dev') 
+                         ? '/api/send'  // Cloudflare Pages üzerinde ise relative URL
+                         : 'https://sentmail.glitchidea.com/api/send'; // Custom domain için
+                     
+                     console.log('Using API URL:', apiUrl);
                      const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
