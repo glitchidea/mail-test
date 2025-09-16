@@ -288,21 +288,24 @@
                 // Form verilerini al
                 const formData = new FormData(form);
                 const originalSubject = formData.get('subject');
+                const originalMessage = formData.get('message');
+                const originalSenderEmail = formData.get('senderEmail');
+                
                 const data = {
-                    subject: originalSubject, // Orijinal konu
-                    message: formData.get('message'),
-                    senderEmail: formData.get('senderEmail')
+                    subject: originalSubject,
+                    message: originalMessage,
+                    senderEmail: originalSenderEmail
                 };
 
                 // Validasyon
-                if (!originalSubject.trim() || !data.message.trim() || !data.senderEmail.trim()) {
+                if (!originalSubject.trim() || !originalMessage.trim() || !originalSenderEmail.trim()) {
                     showStatus('Lütfen tüm alanları doldurun!', 'error');
                     return;
                 }
 
                 // Email formatını kontrol et
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(data.senderEmail)) {
+                if (!emailRegex.test(originalSenderEmail)) {
                     showStatus('Geçerli bir email adresi giriniz!', 'error');
                     return;
                 }
@@ -317,7 +320,11 @@
                      
                      console.log('🚀 Starting email send process');
                      console.log('📤 Using API URL:', apiUrl);
-                     console.log('📊 Form data:', { subject, message: message.substring(0, 50) + '...', senderEmail });
+                     console.log('📊 Form data:', { 
+                         subject: originalSubject, 
+                         message: originalMessage.substring(0, 50) + '...', 
+                         senderEmail: originalSenderEmail 
+                     });
                      
                      const response = await fetch(apiUrl, {
                         method: 'POST',
