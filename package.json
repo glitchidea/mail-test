@@ -4,9 +4,8 @@
   "description": "Email sender Cloudflare Worker",
   "main": "src/worker.js",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "deploy:prod": "wrangler deploy --env production"
+    "build": "echo 'No build step required'",
+    "dev": "wrangler dev"
   },
   "dependencies": {
     "emailjs": "^4.0.3"

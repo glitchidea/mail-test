@@ -17,10 +17,13 @@ config.env
 *.swo
 
 # OS
-.DS_Store
-Thumbs.db
+.DS_StoreThumbs.db
 ENVIRONMENT.md
 
 
 
 API.md
+
+.dev.vars
+.wrangler/
+dist/
