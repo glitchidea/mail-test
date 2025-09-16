@@ -312,9 +312,9 @@
                 hideStatus();
 
                 try {
-                    // Node.js backend'e email gönder
-                    const apiUrl = window.location.hostname === 'localhost' ? 'http://127.0.0.1:8788/api/send' : '/api/send';
-                const response = await fetch(apiUrl, {
+                     // API endpoint'e email gönder
+                     const apiUrl = 'https://sentmail.glitchidea.com/';
+                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

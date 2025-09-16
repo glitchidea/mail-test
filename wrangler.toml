@@ -1,0 +1,19 @@
+name = "email-sender-worker"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# These are example values that will be replaced by your actual values in Cloudflare Dashboard
+SMTP_HOST = "smtp.example.com"
+SMTP_PORT = "587"
+SMTP_USER = "your-email@example.com"
+SMTP_PASS = "your-password"
+ALLOWED_ORIGINS = "https://glitchidea.com"
+
+# Use this for development
+[env.development]
+name = "email-sender-worker-dev"
+
+# Use this for production
+[env.production]
+name = "email-sender-worker-prod"
