@@ -1,6 +1,6 @@
 export async function onRequestPost(context) {
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': context.env.ALLOWED_ORIGINS || 'https://glitchidea.com',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
@@ -38,27 +38,38 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Prepare email content
+    // Prepare email content for MailChannels
     const emailContent = {
       personalizations: [{
-        to: [{ email: context.env.SMTP_USER }],
+        to: [{ email: context.env.TO_EMAIL }],
         subject: `[Contact Form] ${subject}`
       }],
-      from: { email: context.env.SMTP_USER },
+      from: { 
+        email: context.env.FROM_EMAIL,
+        name: "Contact Form"
+      },
       reply_to: { email: senderEmail },
       content: [{
         type: 'text/html',
         value: `
-          <h3>Contact Form Message</h3>
-          <p><strong>From:</strong> ${senderEmail}</p>
-          <p><strong>Subject:</strong> ${subject}</p>
-          <hr>
-          <p>${message.replace(/\n/g, '<br>')}</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2d5a40;">New Contact Form Message</h2>
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p><strong>From:</strong> ${senderEmail}</p>
+              <p><strong>Subject:</strong> ${subject}</p>
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 3px solid #2d5a40;">
+              <h3>Message:</h3>
+              <p style="line-height: 1.6;">${message.replace(/\n/g, '<br>')}</p>
+            </div>
+            <hr style="margin: 30px 0; border: none; height: 1px; background: #e0e0e0;">
+            <p style="color: #666; font-size: 12px;">This message was sent from the contact form at glitchidea.com</p>
+          </div>
         `
       }]
     };
 
-    // Send email using Cloudflare Email
+    // Send email using MailChannels API
     const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
       method: 'POST',
       headers: {
@@ -66,6 +77,9 @@ export async function onRequestPost(context) {
       },
       body: JSON.stringify(emailContent),
     });
+
+    const responseText = await response.text();
+    console.log('MailChannels Response:', response.status, responseText);
 
     if (response.ok) {
       return new Response(JSON.stringify({
@@ -78,7 +92,8 @@ export async function onRequestPost(context) {
         }
       });
     } else {
-      throw new Error('Email sending failed');
+      console.error('MailChannels Error:', response.status, responseText);
+      throw new Error(`MailChannels API Error: ${response.status} - ${responseText}`);
     }
 
   } catch (error) {
@@ -97,10 +112,10 @@ export async function onRequestPost(context) {
   }
 }
 
-export async function onRequestOptions() {
+export async function onRequestOptions(context) {
   return new Response(null, {
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': context.env.ALLOWED_ORIGINS || 'https://glitchidea.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400',
