@@ -312,14 +312,20 @@
                 hideStatus();
 
                 try {
-                    // Node.js backend'e email gönder
-                    const response = await fetch('/send-email', {
+                    // Cloudflare Worker API'ye email gönder
+                    const apiUrl = 'https://sentmail.glitchidea.com/api/send';
+                    
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify(data)
                     });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
 
                     const result = await response.json();
 
