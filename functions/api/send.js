@@ -1,10 +1,13 @@
 export async function onRequestPost(context) {
+  console.log('🚀 === EMAIL API REQUEST START ===');
+  
   // Dynamic CORS handling
   const origin = context.request.headers.get('Origin');
+  console.log('📍 Request origin:', origin);
+  
   const allowedOrigins = [
     'https://glitchidea.com',
-    'https://sentmail.glitchidea.com',
-    'https://75cbf276.mail-test-c8x.pages.dev'
+    'https://sentmail.glitchidea.com'
   ];
   
   const corsHeaders = {
@@ -13,13 +16,31 @@ export async function onRequestPost(context) {
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };
+  
+  console.log('🔒 CORS headers:', corsHeaders);
 
   try {
+    // Log environment variables (without sensitive data)
+    console.log('🔧 Environment check:', {
+      hasFromEmail: !!context.env.FROM_EMAIL,
+      hasToEmail: !!context.env.TO_EMAIL,
+      fromEmailValue: context.env.FROM_EMAIL,
+      toEmailValue: context.env.TO_EMAIL
+    });
+    
     // Parse request body
+    console.log('📝 Parsing request body...');
     const { subject, message, senderEmail } = await context.request.json();
+    console.log('📊 Received data:', { 
+      subject: subject?.substring(0, 50), 
+      messageLength: message?.length, 
+      senderEmail 
+    });
 
     // Validate required fields
+    console.log('✅ Validating required fields...');
     if (!subject?.trim() || !message?.trim() || !senderEmail?.trim()) {
+      console.log('❌ Validation failed: Missing required fields');
       return new Response(JSON.stringify({
         success: false,
         message: 'Tüm alanları doldurunuz'
@@ -33,7 +54,9 @@ export async function onRequestPost(context) {
     }
 
     // Validate email format
+    console.log('✅ Validating email format...');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail)) {
+      console.log('❌ Validation failed: Invalid email format:', senderEmail);
       return new Response(JSON.stringify({
         success: false,
         message: 'Geçersiz email formatı'
@@ -45,8 +68,11 @@ export async function onRequestPost(context) {
         }
       });
     }
+    
+    console.log('✅ All validations passed');
 
     // Prepare email content for MailChannels
+    console.log('📧 Preparing email content...');
     const emailContent = {
       personalizations: [{
         to: [{ email: context.env.TO_EMAIL }],
@@ -76,8 +102,18 @@ export async function onRequestPost(context) {
         `
       }]
     };
+    
+    console.log('📧 Email content prepared:', {
+      to: context.env.TO_EMAIL,
+      from: context.env.FROM_EMAIL,
+      subject: `[Contact Form] ${subject}`,
+      hasContent: !!emailContent.content[0].value
+    });
 
     // Send email using MailChannels API
+    console.log('📤 Sending email via MailChannels...');
+    console.log('📤 API URL: https://api.mailchannels.net/tx/v1/send');
+    
     const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
       method: 'POST',
       headers: {
@@ -86,10 +122,14 @@ export async function onRequestPost(context) {
       body: JSON.stringify(emailContent),
     });
 
+    console.log('📡 MailChannels response status:', response.status);
+    console.log('📡 MailChannels response headers:', [...response.headers.entries()]);
+    
     const responseText = await response.text();
-    console.log('MailChannels Response:', response.status, responseText);
+    console.log('📡 MailChannels response body:', responseText);
 
     if (response.ok) {
+      console.log('🎉 Email sent successfully via MailChannels');
       return new Response(JSON.stringify({
         success: true,
         message: 'Email başarıyla gönderildi'
@@ -100,16 +140,29 @@ export async function onRequestPost(context) {
         }
       });
     } else {
-      console.error('MailChannels Error:', response.status, responseText);
+      console.error('🚨 MailChannels API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+        headers: [...response.headers.entries()]
+      });
       throw new Error(`MailChannels API Error: ${response.status} - ${responseText}`);
     }
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('🚨 === FATAL ERROR ===');
+    console.error('🚨 Error name:', error.name);
+    console.error('🚨 Error message:', error.message);
+    console.error('🚨 Error stack:', error.stack);
+    console.error('🚨 === END ERROR ===');
     
     return new Response(JSON.stringify({
       success: false,
-      message: 'Email gönderilirken bir hata oluştu'
+      message: 'Email gönderilirken bir hata oluştu',
+      debug: {
+        error: error.message,
+        name: error.name
+      }
     }), {
       status: 500,
       headers: {
@@ -125,8 +178,7 @@ export async function onRequestOptions(context) {
   const origin = context.request.headers.get('Origin');
   const allowedOrigins = [
     'https://glitchidea.com',
-    'https://sentmail.glitchidea.com', 
-    'https://75cbf276.mail-test-c8x.pages.dev'
+    'https://sentmail.glitchidea.com'
   ];
   
   return new Response(null, {

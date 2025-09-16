@@ -312,12 +312,13 @@
                 hideStatus();
 
                 try {
-                     // API endpoint'e email gönder - dinamik URL
-                     const apiUrl = window.location.hostname.includes('pages.dev') 
-                         ? '/api/send'  // Cloudflare Pages üzerinde ise relative URL
-                         : 'https://sentmail.glitchidea.com/api/send'; // Custom domain için
+                     // API endpoint'e email gönder
+                     const apiUrl = 'https://sentmail.glitchidea.com/api/send';
                      
-                     console.log('Using API URL:', apiUrl);
+                     console.log('🚀 Starting email send process');
+                     console.log('📤 Using API URL:', apiUrl);
+                     console.log('📊 Form data:', { subject, message: message.substring(0, 50) + '...', senderEmail });
+                     
                      const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
@@ -326,17 +327,34 @@
                         body: JSON.stringify(data)
                     });
 
-                    const result = await response.json();
+                     console.log('📡 Response status:', response.status);
+                     console.log('📡 Response headers:', [...response.headers.entries()]);
+                     
+                     if (!response.ok) {
+                         const errorText = await response.text();
+                         console.error('🚨 Response error:', response.status, errorText);
+                         throw new Error(`HTTP ${response.status}: ${errorText}`);
+                     }
+                     
+                     const result = await response.json();
+                     console.log('✅ Response result:', result);
 
-                    if (result.success) {
-                        showStatus('✅ Mesaj başarıyla gönderildi!', 'success');
-                        form.reset();
-                    } else {
-                        showStatus(`❌ Hata: ${result.message}`, 'error');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    showStatus('❌ Bağlantı hatası! Lütfen tekrar deneyin.', 'error');
+                     if (result.success) {
+                         console.log('🎉 Email sent successfully');
+                         showStatus('✅ Mesaj başarıyla gönderildi!', 'success');
+                         form.reset();
+                     } else {
+                         console.error('❌ API returned error:', result.message);
+                         showStatus(`❌ Hata: ${result.message}`, 'error');
+                     }
+                 } catch (error) {
+                     console.error('🚨 Fetch error:', error);
+                     console.error('🚨 Error details:', {
+                         name: error.name,
+                         message: error.message,
+                         stack: error.stack
+                     });
+                     showStatus('❌ Bağlantı hatası! Lütfen tekrar deneyin.', 'error');
                 } finally {
                     setLoading(false);
                 }
