@@ -288,24 +288,21 @@
                 // Form verilerini al
                 const formData = new FormData(form);
                 const originalSubject = formData.get('subject');
-                const originalMessage = formData.get('message');
-                const originalSenderEmail = formData.get('senderEmail');
-                
                 const data = {
-                    subject: originalSubject,
-                    message: originalMessage,
-                    senderEmail: originalSenderEmail
+                    subject: originalSubject, // Orijinal konu
+                    message: formData.get('message'),
+                    senderEmail: formData.get('senderEmail')
                 };
 
                 // Validasyon
-                if (!originalSubject.trim() || !originalMessage.trim() || !originalSenderEmail.trim()) {
+                if (!originalSubject.trim() || !data.message.trim() || !data.senderEmail.trim()) {
                     showStatus('Lütfen tüm alanları doldurun!', 'error');
                     return;
                 }
 
                 // Email formatını kontrol et
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(originalSenderEmail)) {
+                if (!emailRegex.test(data.senderEmail)) {
                     showStatus('Geçerli bir email adresi giriniz!', 'error');
                     return;
                 }
@@ -315,18 +312,8 @@
                 hideStatus();
 
                 try {
-                     // API endpoint'e email gönder
-                     const apiUrl = 'https://sentmail.glitchidea.com/api/send';
-                     
-                     console.log('🚀 Starting email send process');
-                     console.log('📤 Using API URL:', apiUrl);
-                     console.log('📊 Form data:', { 
-                         subject: originalSubject, 
-                         message: originalMessage.substring(0, 50) + '...', 
-                         senderEmail: originalSenderEmail 
-                     });
-                     
-                     const response = await fetch(apiUrl, {
+                    // Node.js backend'e email gönder
+                    const response = await fetch('/send-email', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -334,34 +321,17 @@
                         body: JSON.stringify(data)
                     });
 
-                     console.log('📡 Response status:', response.status);
-                     console.log('📡 Response headers:', [...response.headers.entries()]);
-                     
-                     if (!response.ok) {
-                         const errorText = await response.text();
-                         console.error('🚨 Response error:', response.status, errorText);
-                         throw new Error(`HTTP ${response.status}: ${errorText}`);
-                     }
-                     
-                     const result = await response.json();
-                     console.log('✅ Response result:', result);
+                    const result = await response.json();
 
-                     if (result.success) {
-                         console.log('🎉 Email sent successfully');
-                         showStatus('✅ Mesaj başarıyla gönderildi!', 'success');
-                         form.reset();
-                     } else {
-                         console.error('❌ API returned error:', result.message);
-                         showStatus(`❌ Hata: ${result.message}`, 'error');
-                     }
-                 } catch (error) {
-                     console.error('🚨 Fetch error:', error);
-                     console.error('🚨 Error details:', {
-                         name: error.name,
-                         message: error.message,
-                         stack: error.stack
-                     });
-                     showStatus('❌ Bağlantı hatası! Lütfen tekrar deneyin.', 'error');
+                    if (result.success) {
+                        showStatus('✅ Mesaj başarıyla gönderildi!', 'success');
+                        form.reset();
+                    } else {
+                        showStatus(`❌ Hata: ${result.message}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showStatus('❌ Bağlantı hatası! Lütfen tekrar deneyin.', 'error');
                 } finally {
                     setLoading(false);
                 }
