@@ -1,8 +1,10 @@
-name: GitHub Pages Deploy
+name: GitHub Pages Deploy and Email Handler
 
 on:
   push:
     branches: [ main ]
+  repository_dispatch:
+    types: [ send_email ]
 
 jobs:
   deploy:
@@ -30,3 +32,61 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  send_email:
+    if: github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install nodemailer
+        run: npm install nodemailer
+
+      - name: Send email
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const nodemailer = require('nodemailer');
+            
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                user: process.env.GMAIL_USER,
+                pass: process.env.GMAIL_PASS
+              }
+            });
+            
+            const { name, email, message } = context.payload.client_payload;
+            
+            const mailOptions = {
+              from: process.env.GMAIL_USER,
+              to: 'info@glitchidea.com',
+              replyTo: email,
+              subject: `Yeni İletişim Formu Mesajı - ${name}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
+                    Yeni İletişim Formu Mesajı
+                  </h2>
+                  
+                  <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>Gönderen:</strong> ${name}</p>
+                    <p><strong>E-posta:</strong> ${email}</p>
+                  </div>
+                  
+                  <div style="background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
+                    <h3 style="color: #555; margin-top: 0;">Mesaj:</h3>
+                    <p style="white-space: pre-wrap;">${message}</p>
+                  </div>
+                </div>
+              `,
+              text: `Gönderen: ${name}\nE-posta: ${email}\n\nMesaj:\n${message}`
+            };
+            
+            await transporter.sendMail(mailOptions);
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
