@@ -58,10 +58,6 @@
         button:hover {
             background: #0056b3;
         }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
         .alert {
             padding: 15px;
             margin: 20px 0;
@@ -86,7 +82,7 @@
         
         <div id="status" class="alert"></div>
 
-        <form id="contact-form">
+        <form action="send.php" method="POST">
             <div class="form-group">
                 <label for="name">Adınız</label>
                 <input type="text" id="name" name="name" required>
@@ -107,52 +103,24 @@
     </div>
 
     <script>
-        document.getElementById('contact-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const form = e.target;
-            const statusDiv = document.getElementById('status');
+        const form = document.getElementById('contact-form');
+        const statusDiv = document.getElementById('status');
+
+        form.addEventListener('submit', function(e) {
             const submitButton = form.querySelector('button');
-            
             submitButton.disabled = true;
             submitButton.textContent = 'Gönderiliyor...';
+            
+            // Form submit olurken status mesajını gizle
             statusDiv.style.display = 'none';
-            
-            const formData = {
-                event_type: 'send_email',
-                client_payload: {
-                    name: form.name.value,
-                    email: form.email.value,
-                    message: form.message.value
-                }
-            };
-            
-            try {
-                const response = await fetch('https://api.github.com/repos/glitchidea/mail-test/dispatches', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Authorization': 'token ' + 'ghp_' + 'YOUR_TOKEN'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                if (response.ok) {
-                    statusDiv.textContent = 'Mesajınız başarıyla gönderildi!';
-                    statusDiv.className = 'alert alert-success';
-                    form.reset();
-                } else {
-                    throw new Error('Gönderim başarısız oldu');
-                }
-            } catch (error) {
-                statusDiv.textContent = 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
-                statusDiv.className = 'alert alert-error';
-            } finally {
-                statusDiv.style.display = 'block';
-                submitButton.disabled = false;
-                submitButton.textContent = 'Gönder';
-            }
         });
+
+        // PHP'den gelen mesajları göster
+        <?php if (isset($_GET['status'])): ?>
+            statusDiv.textContent = "<?php echo $_GET['message'] ?? ''; ?>";
+            statusDiv.className = "alert alert-<?php echo $_GET['status'] == 'success' ? 'success' : 'error'; ?>";
+            statusDiv.style.display = 'block';
+        <?php endif; ?>
     </script>
 </body>
 </html>
