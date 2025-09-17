@@ -4,12 +4,21 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -23,14 +32,19 @@ jobs:
           php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
           php composer-setup.php
           php -r "unlink('composer-setup.php');"
-          mv composer.phar /usr/local/bin/composer
+          sudo mv composer.phar /usr/local/bin/composer
 
       - name: Install Dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          enable_jekyll: false
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
