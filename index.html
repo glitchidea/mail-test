@@ -55,7 +55,7 @@
 </head>
 <body>
     <h1>İletişim Formu</h1>
-    <form id="contact-form">
+    <form id="contact-form" method="POST">
         <input type="text" name="name" placeholder="Adınız" required>
         <input type="email" name="email" placeholder="E-posta Adresiniz" required>
         <textarea name="message" placeholder="Mesajınız" required></textarea>
@@ -64,10 +64,6 @@
     <div id="status" class="status"></div>
 
     <script>
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:8081/send-email'
-            : '/api/send-email';
-
         document.getElementById('contact-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -82,7 +78,7 @@
             const data = Object.fromEntries(formData.entries());
             
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch('/send-email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -90,17 +86,17 @@
                     body: JSON.stringify(data)
                 });
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
                 const result = await response.json();
-                statusDiv.textContent = result.message;
-                statusDiv.className = 'status success';
-                form.reset();
+                
+                if (response.ok) {
+                    statusDiv.textContent = result.message;
+                    statusDiv.className = 'status success';
+                    form.reset();
+                } else {
+                    throw new Error(result.error);
+                }
             } catch (error) {
-                console.error('Error:', error);
-                statusDiv.textContent = 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
+                statusDiv.textContent = error.message || 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
                 statusDiv.className = 'status error';
             } finally {
                 statusDiv.style.display = 'block';
