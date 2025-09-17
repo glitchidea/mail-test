@@ -1,10 +1,8 @@
-name: GitHub Pages Deploy and Email Handler
+name: GitHub Pages Deploy
 
 on:
   push:
     branches: [ main ]
-  repository_dispatch:
-    types: [ send_email ]
 
 jobs:
   deploy:
@@ -32,26 +30,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  send_email:
-    if: github.event_name == 'repository_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send email
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.GMAIL_USER }}
-          password: ${{ secrets.GMAIL_PASS }}
-          subject: Yeni İletişim Formu Mesajı
-          from: ${{ secrets.GMAIL_USER }}
-          to: info@glitchidea.com
-          body: |
-            Yeni bir iletişim formu mesajı aldınız:
-            
-            Gönderen: ${{ github.event.client_payload.name }}
-            E-posta: ${{ github.event.client_payload.email }}
-            
-            Mesaj:
-            ${{ github.event.client_payload.message }}
