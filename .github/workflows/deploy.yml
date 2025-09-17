@@ -1,53 +1,41 @@
-name: Deploy and Run API
+name: Deploy PHP Application
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  api:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          node-version: '20'
+          php-version: '8.1'
+          extensions: mbstring, intl
+          coverage: none
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Start API Server
-        run: node api/send-email.js &
+      - name: Setup Environment
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
-          PORT: 8081
-
-  pages:
-    needs: api
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
+        run: |
+          echo "GMAIL_USER=$GMAIL_USER" >> .env
+          echo "GMAIL_PASS=$GMAIL_PASS" >> .env
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          enable_jekyll: false

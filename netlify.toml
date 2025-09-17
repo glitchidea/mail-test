@@ -1,0 +1,13 @@
+[build]
+  publish = "."
+  command = "composer install"
+
+[build.environment]
+  PHP_VERSION = "8.1"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.php"
+  status = 200
+  force = false
+  conditions = {Path = {matches = "\\.[html?|php]$"}}

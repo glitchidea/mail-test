@@ -1,5 +1,14 @@
 {
+    "name": "glitchidea/mail-test",
+    "description": "Contact form with PHP mailer",
+    "type": "project",
     "require": {
+        "php": "^8.1",
         "phpmailer/phpmailer": "^6.8"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
     }
 }
