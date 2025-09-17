@@ -5,8 +5,15 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -21,34 +28,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build static files
-        run: |
-          mkdir -p dist
-          cp index.html dist/
-          cp -r api dist/
-          cp package.json dist/
-          cp package-lock.json dist/
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    
-    permissions:
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
